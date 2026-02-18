@@ -1,10 +1,8 @@
-# unique-word-occurences-across-files
-
 Given multiple text files, a C# program counts the occurrences of each unique word in the files and aggregates the results. The implementation is designed to minimize running time and memory usage, independent of the number of files or file size.
 
 ## Overview
 
-This project provides an optimized command-line application that efficiently processes large text files to generate word frequency statistics. The implementation uses modern C# features and best practices for performance and scalability.
+This project provides a command-line application that efficiently processes large text files to generate word frequency statistics. The implementation uses modern C# features and best practices for performance and scalability.
 
 ## Key Features
 
@@ -66,23 +64,28 @@ dotnet run --project WordCounter.csproj -- *.txt
 ```
 Processing 3 file(s)...
 
-Total unique words: 42
-Total word occurrences: 287
+Total unique words: 15
+Total word occurrences: 19
 
 Word Counts (Top 50 by frequency):
 --------------------------------------------------
-Word                           Count
+Word                                     Count
 --------------------------------------------------
-the                               25
-quick                             18
-fox                               15
-dog                               14
-brown                             12
-and                               11
-is                                 9
-was                                8
-very                               7
-...
+do                                           3
+that                                         2
+well                                         2
+and                                          1
+go                                           1
+i                                            1
+many                                         1
+more                                         1
+not                                          1
+so                                           1
+thing                                        1
+things                                       1
+very                                         1
+word                                         1
+you                                          1
 ```
 
 ## Algorithm Description
@@ -139,10 +142,10 @@ dotnet run -- sample1.txt sample2.txt sample3.txt
 
 ## Scalability Considerations
 
-**Handles Large Files**: Streaming I/O keeps memory usage constant regardless of file size
-**Handles Many Files**: Parallel processing divides work across CPU cores
-**Handles Long Lines**: Line-based processing doesn't fail on files with very long lines
-**Graceful Degradation**: Error handling allows processing to continue even if some files fail
+- **Handles Large Files**: Streaming I/O keeps memory usage constant regardless of file size
+- **Handles Many Files**: Parallel processing divides work across CPU cores
+- **Handles Long Lines**: Line-based processing doesn't fail on files with very long lines
+- **Graceful Degradation**: Error handling allows processing to continue even if some files fail
 
 ## Error Handling
 
@@ -159,7 +162,3 @@ dotnet run -- sample1.txt sample2.txt sample3.txt
   - `System.Collections.Concurrent` - Thread-safe ConcurrentDictionary
   - `System.Text.RegularExpressions` - Word extraction pattern matching
   - `System.Threading.Tasks` - Asynchronous and parallel processing
-
-## License
-
-MIT

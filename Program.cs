@@ -3,12 +3,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading.Tasks;
 
 class WordCounterProgram
 {
-    private static readonly Regex WordPattern = new Regex(@"\b\w+\b", RegexOptions.Compiled);
+    private const int DefaultChunkSize = 64 * 1024;
+    private const int InitialWordCapacity = 64;
+    private const string ChunkSizeEnvVar = "WORD_COUNTER_CHUNK_SIZE";
+    private const string MaxParallelismEnvVar = "WORD_COUNTER_MAX_PARALLELISM";
     private static readonly ConcurrentDictionary<string, long> WordCounts = 
         new ConcurrentDictionary<string, long>();
 
@@ -48,10 +51,11 @@ class WordCounterProgram
 
     private static async Task ProcessFilesAsync(List<string> filePaths)
     {
-        // Use parallel processing with a degree of parallelism based on processor count
+        // Use parallel processing with configurable degree of parallelism
+        int maxParallelism = GetMaxDegreeOfParallelism(filePaths.Count);
         var parallelOptions = new ParallelOptions
         {
-            MaxDegreeOfParallelism = Math.Min(filePaths.Count, Environment.ProcessorCount)
+            MaxDegreeOfParallelism = maxParallelism
         };
 
         await Parallel.ForEachAsync(filePaths, parallelOptions, async (filePath, ct) =>
@@ -67,22 +71,53 @@ class WordCounterProgram
         });
     }
 
+    private static int GetMaxDegreeOfParallelism(int fileCount)
+    {
+        if (fileCount <= 0)
+        {
+            return 1;
+        }
+
+        string? configuredValue = Environment.GetEnvironmentVariable(MaxParallelismEnvVar);
+        if (!string.IsNullOrWhiteSpace(configuredValue) && int.TryParse(configuredValue, out int parsedValue) && parsedValue > 0)
+        {
+            return Math.Min(fileCount, parsedValue);
+        }
+
+        int defaultParallelism = Math.Max(1, Environment.ProcessorCount * 2);
+        return Math.Min(fileCount, defaultParallelism);
+    }
+
+    private static int GetChunkSize()
+    {
+        string? configuredValue = Environment.GetEnvironmentVariable(ChunkSizeEnvVar);
+        if (!string.IsNullOrWhiteSpace(configuredValue) && int.TryParse(configuredValue, out int parsedValue) && parsedValue > 0)
+        {
+            return parsedValue;
+        }
+
+        return DefaultChunkSize;
+    }
+
     private static async Task ProcessFileAsync(string filePath, System.Threading.CancellationToken ct)
     {
         try
         {
-            // Use StreamReader with a reasonable buffer size (64KB) for efficient I/O
-            using (var reader = new StreamReader(filePath, System.Text.Encoding.UTF8, true, bufferSize: 65536))
-            {
-                string? line;
-                while ((line = await reader.ReadLineAsync(ct)) != null)
-                {
-                    if (string.IsNullOrWhiteSpace(line))
-                        continue;
+            int chunkSize = GetChunkSize();
 
-                    // Extract words from the line
-                    ProcessLine(line);
+            // Use chunk-based tokenization to handle arbitrarily long lines safely
+            using (var reader = new StreamReader(filePath, Encoding.UTF8, true, bufferSize: chunkSize))
+            {
+                char[] buffer = new char[chunkSize];
+                var currentWord = new StringBuilder(InitialWordCapacity);
+                int charsRead;
+
+                while ((charsRead = await reader.ReadAsync(buffer.AsMemory(0, chunkSize), ct)) > 0)
+                {
+                    ProcessChunk(buffer, charsRead, currentWord);
                 }
+
+                FlushCurrentWord(currentWord);
             }
         }
         catch (OperationCanceledException)
@@ -95,18 +130,38 @@ class WordCounterProgram
         }
     }
 
-    private static void ProcessLine(string line)
+    private static void ProcessChunk(char[] buffer, int charsRead, StringBuilder currentWord)
     {
-        // Use regex to extract words (alphanumeric sequences)
-        var matches = WordPattern.Matches(line);
-
-        foreach (Match match in matches)
+        for (int index = 0; index < charsRead; index++)
         {
-            string word = match.Value.ToLowerInvariant();
-
-            // Increment count for this word
-            WordCounts.AddOrUpdate(word, 1, (key, oldValue) => oldValue + 1);
+            char character = buffer[index];
+            if (IsWordCharacter(character))
+            {
+                currentWord.Append(char.ToLowerInvariant(character));
+            }
+            else
+            {
+                FlushCurrentWord(currentWord);
+            }
         }
+    }
+
+    private static bool IsWordCharacter(char character)
+    {
+        return char.IsLetterOrDigit(character) || character == '_';
+    }
+
+    private static void FlushCurrentWord(StringBuilder currentWord)
+    {
+        if (currentWord.Length == 0)
+        {
+            return;
+        }
+
+        string word = currentWord.ToString();
+        currentWord.Clear();
+
+        WordCounts.AddOrUpdate(word, 1, (_, oldValue) => oldValue + 1);
     }
 
     private static void DisplayResults()

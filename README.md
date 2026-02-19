@@ -7,18 +7,20 @@ This project provides a command-line application that efficiently processes larg
 ## Key Features
 
 - **Parallel File Processing**: Processes multiple files concurrently using all available CPU cores
-- **Memory-Efficient Streaming**: Reads files line-by-line with 64KB buffering to handle large files without loading entire contents into memory
+- **Memory-Efficient Streaming**: Reads files in 64KB chunks to handle arbitrarily large files and lines without loading entire contents into memory
+- **Word Integrity Preservation**: Words are assembled character-by-character and preserved across chunk boundaries
+- **Runtime Tuning**: Supports environment-based tuning for chunk size and max parallelism
 - **Thread-Safe Aggregation**: Uses `ConcurrentDictionary` for safe concurrent word count updates
 - **Case-Insensitive Analysis**: Normalizes words to lowercase for accurate frequency counting
-- **Robust Word Extraction**: Uses compiled regex patterns to extract words, ignoring punctuation
+- **Robust Word Extraction**: Uses streaming character tokenization for letters, digits, and underscore
 - **Comprehensive Statistics**: Displays total unique words, total occurrences, and top 50 words by frequency
 
 ## Performance Optimizations
 
-1. **Streaming I/O**: Files are processed line-by-line rather than loading entire contents into memory
+1. **Chunk-Based Streaming**: Files are processed in 64KB chunks rather than loading entire contents into memory
 2. **Buffered Reading**: Uses 64KB buffer size for optimal I/O performance with large files
 3. **Parallel Processing**: Files are processed concurrently with `Parallel.ForEachAsync` controlling parallelism based on the number of processors available, or number of files
-4. **Compiled Regex**: Word extraction regex is compiled once for reuse across lines
+4. **Streaming Tokenization**: Character-by-character parsing preserves word integrity across chunk boundaries without regex overhead
 5. **Concurrent Dictionary**: Thread-safe word count aggregation without explicit locking
 6. **Lazy Evaluation**: Results are sorted only once after all processing is complete
 
@@ -50,6 +52,16 @@ dotnet run --project WordCounter.csproj -- sample1.txt sample2.txt sample3.txt
 
 # Process with globbing (shell expansion)
 dotnet run --project WordCounter.csproj -- *.txt
+```
+
+### Optional Runtime Configuration
+
+```bash
+# Override chunk size (bytes)
+export WORD_COUNTER_CHUNK_SIZE=131072
+
+# Override max number of files processed in parallel
+export WORD_COUNTER_MAX_PARALLELISM=16
 ```
 
 ### Running the Executable
@@ -92,13 +104,15 @@ you                                          1
 
 ### Word Counting Algorithm
 
-1. **File Reading**: Each file is processed asynchronously with line-by-line streaming
+1. **File Reading**: Each file is processed asynchronously with chunk-based streaming
    - Uses `StreamReader` with UTF-8 encoding and 64KB buffer
-   - Skips empty/whitespace-only lines for efficiency
+   - Reads fixed 64KB chunks to handle arbitrarily long lines
+   - Assembles words character-by-character across chunk boundaries
+   - Skips empty/whitespace-only chunks for efficiency
 
-2. **Word Extraction**: Line content is parsed using regex pattern `\b\w+\b`
-   - `\b` = word boundary
-   - `\w+` = one or more word characters (letters, digits, underscore)
+2. **Word Extraction**: Chunk content is tokenized character-by-character
+   - Word characters: letters, digits, and underscore (`_`)
+   - Non-word characters flush the current token
    - Case normalization with `ToLowerInvariant()`
 
 3. **Aggregation**: Word counts are updated in concurrent dictionary
@@ -137,14 +151,14 @@ you                                          1
 Run the program with the provided sample files:
 
 ```bash
-dotnet run -- sample1.txt sample2.txt sample3.txt
+dotnet run --project WordCounter.csproj -- sample1.txt sample2.txt sample3.txt
 ```
 
 ## Scalability Considerations
 
-- **Handles Large Files**: Streaming I/O keeps memory usage constant regardless of file size
+- **Handles Large Files**: Chunk-based streaming keeps memory usage constant regardless of file size
 - **Handles Many Files**: Parallel processing divides work across CPU cores
-- **Handles Long Lines**: Line-based processing doesn't fail on files with very long lines
+- **Handles Arbitrarily Long Lines**: Streaming tokenization handles lines of any length without memory issues
 - **Graceful Degradation**: Error handling allows processing to continue even if some files fail
 
 ## Error Handling
@@ -160,5 +174,5 @@ dotnet run -- sample1.txt sample2.txt sample3.txt
 - Uses only built-in .NET libraries:
   - `System.IO` - File streaming and buffered reading
   - `System.Collections.Concurrent` - Thread-safe ConcurrentDictionary
-  - `System.Text.RegularExpressions` - Word extraction pattern matching
+   - `System.Text` - Incremental token buffering with StringBuilder
   - `System.Threading.Tasks` - Asynchronous and parallel processing

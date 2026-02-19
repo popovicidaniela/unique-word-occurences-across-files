@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,44 @@ public class WordCounterServiceTests
 
             Assert.Empty(result.ProcessingErrors);
             Assert.Equal(2, factoryInvocationCount);
+        }
+        finally
+        {
+            DeleteDirectoryQuietly(tempDirectory);
+        }
+    }
+
+    [Fact]
+    public async Task UsesDistinctTokenizerInstancePerProcessedFile()
+    {
+        string tempDirectory = CreateTempDirectory();
+
+        try
+        {
+            string file1 = Path.Combine(tempDirectory, "first.txt");
+            string file2 = Path.Combine(tempDirectory, "second.txt");
+            string file3 = Path.Combine(tempDirectory, "third.txt");
+
+            await File.WriteAllTextAsync(file1, "alpha");
+            await File.WriteAllTextAsync(file2, "beta");
+            await File.WriteAllTextAsync(file3, "gamma");
+
+            var createdInstances = new ConcurrentBag<IWordTokenizer>();
+            Func<IWordTokenizer> tokenizerFactory = () =>
+            {
+                IWordTokenizer tokenizer = new StreamingWordTokenizer();
+                createdInstances.Add(tokenizer);
+                return tokenizer;
+            };
+
+            var options = new WordCounterOptions(chunkSize: 8, maxParallelism: 3);
+            var service = new WordCounterService(options, tokenizerFactory);
+
+            WordCountResult result = await service.CountWordsAsync(new[] { file1, file2, file3 });
+
+            Assert.Empty(result.ProcessingErrors);
+            Assert.Equal(3, createdInstances.Count);
+            Assert.Equal(3, createdInstances.Distinct().Count());
         }
         finally
         {

@@ -42,6 +42,11 @@ public sealed class CliRunner
         WordCountResult result = await _wordCounterService.CountWordsAsync(filePaths, cancellationToken);
         _reportFormatter.Print(result, Console.Out);
 
+        if (result.ProcessingErrors.Count > 0)
+        {
+            return 2;
+        }
+
         return 0;
     }
 }

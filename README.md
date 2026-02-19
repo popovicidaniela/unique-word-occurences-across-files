@@ -27,7 +27,15 @@ This project provides a command-line application that efficiently processes larg
 ## Building the Project
 
 ### Requirements
-- .NET 10.0 SDK or later
+- .NET 10.0 SDK or later (`dotnet --version`)
+- NuGet restore access (internet or an internal package feed) for first-time setup
+
+### Initial Setup
+
+```bash
+# Restore all projects (app + tests)
+dotnet restore WordCounter.sln
+```
 
 ### Build Commands
 
@@ -154,6 +162,14 @@ Run the program with the provided sample files:
 dotnet run --project WordCounter.csproj -- sample1.txt sample2.txt sample3.txt
 ```
 
+Run the automated tests:
+
+```bash
+dotnet test WordCounter.sln
+```
+
+Test project dependencies are restored automatically during `dotnet restore` / `dotnet test`.
+
 ## Scalability Considerations
 
 - **Handles Large Files**: Chunk-based streaming keeps memory usage constant regardless of file size
@@ -169,10 +185,19 @@ dotnet run --project WordCounter.csproj -- sample1.txt sample2.txt sample3.txt
 
 ## Dependencies
 
-- .NET 10.0 or later
-- No external NuGet packages required
+### Runtime (WordCounter)
+
+- .NET 10.0 runtime/SDK
+- No external NuGet packages required for the main app
 - Uses only built-in .NET libraries:
   - `System.IO` - File streaming and buffered reading
   - `System.Collections.Concurrent` - Thread-safe ConcurrentDictionary
    - `System.Text` - Incremental token buffering with StringBuilder
   - `System.Threading.Tasks` - Asynchronous and parallel processing
+
+### Test Project (WordCounter.Tests)
+
+- `Microsoft.NET.Test.Sdk` `17.14.1`
+- `xunit` `2.9.3`
+- `xunit.runner.visualstudio` `3.1.4`
+- `coverlet.collector` `6.0.4`

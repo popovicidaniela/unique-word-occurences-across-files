@@ -10,10 +10,12 @@ using System.Threading.Tasks;
 public sealed class WordCounterService : IWordCounterService
 {
     private readonly WordCounterOptions _options;
+    private readonly Func<IWordTokenizer> _tokenizerFactory;
 
-    public WordCounterService(WordCounterOptions options)
+    public WordCounterService(WordCounterOptions options, Func<IWordTokenizer>? tokenizerFactory = null)
     {
-        _options = options;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _tokenizerFactory = tokenizerFactory ?? (() => new StreamingWordTokenizer());
     }
 
     public async Task<WordCountResult> CountWordsAsync(IReadOnlyList<string> filePaths, CancellationToken cancellationToken = default)
@@ -48,7 +50,7 @@ public sealed class WordCounterService : IWordCounterService
         using var reader = new StreamReader(filePath, Encoding.UTF8, true, bufferSize: _options.ChunkSize);
 
         char[] buffer = new char[_options.ChunkSize];
-        IWordTokenizer tokenizer = new StreamingWordTokenizer();
+        IWordTokenizer tokenizer = _tokenizerFactory() ?? throw new InvalidOperationException("Tokenizer factory returned null.");
 
         int charsRead;
         while ((charsRead = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken)) > 0)

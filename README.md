@@ -6,7 +6,7 @@ This project provides a command-line application that efficiently processes larg
 
 ## Key Features
 
-- **Parallel File Processing**: Processes multiple files concurrently using all available CPU cores
+- **Parallel File Processing**: Processes multiple files concurrently with bounded, configurable parallelism
 - **Memory-Efficient Streaming**: Reads files in 64KB chunks to handle arbitrarily large files and lines without loading entire contents into memory
 - **Word Integrity Preservation**: Words are assembled character-by-character and preserved across chunk boundaries
 - **Runtime Tuning**: Supports environment-based tuning for chunk size and max parallelism
@@ -19,7 +19,7 @@ This project provides a command-line application that efficiently processes larg
 
 1. **Chunk-Based Streaming**: Files are processed in 64KB chunks rather than loading entire contents into memory
 2. **Buffered Reading**: Uses 64KB buffer size for optimal I/O performance with large files
-3. **Parallel Processing**: Files are processed concurrently with `Parallel.ForEachAsync` controlling parallelism based on the number of processors available, or number of files
+3. **Parallel Processing**: Files are processed concurrently with `Parallel.ForEachAsync` using configurable bounded parallelism
 4. **Streaming Tokenization**: Character-by-character parsing preserves word integrity across chunk boundaries without regex overhead
 5. **Concurrent Dictionary**: Thread-safe word count aggregation without explicit locking
 6. **Lazy Evaluation**: Results are sorted only once after all processing is complete
@@ -43,7 +43,7 @@ dotnet restore WordCounter.sln
 # Build the project
 dotnet build WordCounter.csproj
 
-# Publish as self-contained executable
+# Publish the executable
 dotnet publish -c Release WordCounter.csproj
 ```
 
@@ -147,7 +147,17 @@ you                                          1
 /
 ├── WordCounter.sln         # Solution file
 ├── WordCounter.csproj      # Project file
-├── Program.cs              # Main implementation
+├── Program.cs              # Composition root
+├── CliRunner.cs            # CLI orchestration and argument validation
+├── WordCounterService.cs   # Core counting service
+├── StreamingWordTokenizer.cs # Chunk tokenizer preserving words across boundaries
+├── ConsoleReportFormatter.cs # Console output formatter
+├── WordCounterOptions.cs   # Runtime options/env configuration
+├── WordCountResult.cs      # Result model
+├── IWordCounterService.cs  # Service abstraction
+├── IWordTokenizer.cs       # Tokenizer abstraction
+├── IWordCountReportFormatter.cs # Formatter abstraction
+├── WordCounter.Tests/      # Test project
 ├── README.md               # This file
 ├── sample1.txt             # Sample test file
 ├── sample2.txt             # Sample test file

@@ -76,7 +76,7 @@ export WORD_COUNTER_MAX_PARALLELISM=16
 
 ```bash
 # After publishing
-./bin/Release/net10.0/WordCounter file1.txt file2.txt file3.txt
+./bin/Release/net10.0/WordCounter sample1.txt sample2.txt sample3.txt
 ```
 
 ## Example Output

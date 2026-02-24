@@ -1,6 +1,6 @@
 using System;
 
-public sealed class WordCounterOptions
+public sealed class WordCounterOptions : IWordCounterSettings
 {
     public const int DefaultChunkSize = 64 * 1024;
     public const int InitialWordCapacity = 64;

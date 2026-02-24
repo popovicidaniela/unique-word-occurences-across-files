@@ -9,6 +9,8 @@ class WordCounterProgram
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
         builder.Services.AddSingleton(WordCounterOptions.FromEnvironment());
+        builder.Services.AddSingleton<IWordCounterSettings>(serviceProvider =>
+            serviceProvider.GetRequiredService<WordCounterOptions>());
 
         builder.Services.AddTransient<IWordTokenizer, StreamingWordTokenizer>();
         builder.Services.AddSingleton<Func<IWordTokenizer>>(serviceProvider =>

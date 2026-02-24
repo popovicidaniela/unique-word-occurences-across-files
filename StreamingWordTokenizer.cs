@@ -10,13 +10,14 @@ using System.Text;
 /// </remarks>
 public sealed class StreamingWordTokenizer : IWordTokenizer
 {
+    private const int DefaultInitialWordCapacity = 64;
     private readonly StringBuilder _currentWord;
 
     /// <summary>
     /// Initializes a new tokenizer instance with an optional initial word buffer capacity.
     /// </summary>
     /// <param name="initialWordCapacity">Initial capacity for the internal word buffer.</param>
-    public StreamingWordTokenizer(int initialWordCapacity = WordCounterOptions.InitialWordCapacity)
+    public StreamingWordTokenizer(int initialWordCapacity = DefaultInitialWordCapacity)
     {
         _currentWord = new StringBuilder(initialWordCapacity);
     }

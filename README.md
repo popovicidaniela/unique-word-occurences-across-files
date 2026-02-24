@@ -245,22 +245,26 @@ Test project dependencies are restored automatically during `dotnet restore` / `
 
 ```mermaid
 flowchart LR
-    Program["WordCounterProgram"] --> Options["WordCounterOptions"]
-    Program --> Service["WordCounterService"]
-    Program --> Formatter["ConsoleReportFormatter"]
-    Program --> Runner["CliRunner"]
+   Program["WordCounterProgram"] --> Host["Generic Host / DI Container"]
 
-    Runner --> ICounter["IWordCounterService"]
-    Runner --> IFormatter["IWordCountReportFormatter"]
+   Host --> Runner["CliRunner"]
+   Host --> ICounter["IWordCounterService"]
+   Host --> IFormatter["IWordCountReportFormatter"]
+   Host --> ITokenizer["IWordTokenizer (Transient)"]
+   Host --> Factory["Func IWordTokenizer"]
+   Host --> Options["WordCounterOptions (Singleton)"]
 
-    Service --> ICounter
-    Service --> Options
-    Service --> ITokenizer["IWordTokenizer"]
-    Service --> Result["WordCountResult"]
+   Runner --> ICounter
+   Runner --> IFormatter
 
-    Formatter --> IFormatter
-    Formatter --> Result
+   ICounter --> Service["WordCounterService"]
+   IFormatter --> Formatter["ConsoleReportFormatter"]
+   ITokenizer --> TokenizerImpl["StreamingWordTokenizer"]
 
-    TokenizerImpl["StreamingWordTokenizer"] --> ITokenizer
-    TokenizerImpl --> Options
+   Service --> ISettings["IWordCounterSettings"]
+   Service --> Factory
+   Service --> Result["WordCountResult"]
+
+   Formatter --> Result
+   Options --> ISettings
 ```

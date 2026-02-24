@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 class WordCounterProgram
@@ -5,7 +6,8 @@ class WordCounterProgram
     static async Task Main(string[] args)
     {
         var options = WordCounterOptions.FromEnvironment();
-        var service = new WordCounterService(options);
+        Func<IWordTokenizer> tokenizerFactory = () => new StreamingWordTokenizer();
+        var service = new WordCounterService(options, tokenizerFactory);
         var formatter = new ConsoleReportFormatter();
         var runner = new CliRunner(service, formatter);
 

@@ -211,3 +211,27 @@ Test project dependencies are restored automatically during `dotnet restore` / `
 - `xunit` `2.9.3`
 - `xunit.runner.visualstudio` `3.1.4`
 - `coverlet.collector` `6.0.4`
+
+### Dependencies diagram
+
+```mermaid
+flowchart LR
+    Program["WordCounterProgram"] --> Options["WordCounterOptions"]
+    Program --> Service["WordCounterService"]
+    Program --> Formatter["ConsoleReportFormatter"]
+    Program --> Runner["CliRunner"]
+
+    Runner --> ICounter["IWordCounterService"]
+    Runner --> IFormatter["IWordCountReportFormatter"]
+
+    Service --> ICounter
+    Service --> Options
+    Service --> ITokenizer["IWordTokenizer"]
+    Service --> Result["WordCountResult"]
+
+    Formatter --> IFormatter
+    Formatter --> Result
+
+    TokenizerImpl["StreamingWordTokenizer"] --> ITokenizer
+    TokenizerImpl --> Options
+```

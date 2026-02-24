@@ -20,7 +20,7 @@ public class WordCounterServiceTests
             await File.WriteAllTextAsync(filePath, "alpha beta alpha");
 
             var options = new WordCounterOptions(chunkSize: 8, maxParallelism: 1);
-            var service = new WordCounterService(options);
+            var service = new WordCounterService(options, () => new StreamingWordTokenizer());
 
             WordCountResult result = await service.CountWordsAsync(new[] { filePath });
 

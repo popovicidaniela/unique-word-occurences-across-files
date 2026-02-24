@@ -16,6 +16,8 @@ public interface IWordTokenizer
     /// <param name="chunk">The next contiguous chunk of characters from the input stream.</param>
     /// <param name="onWord">Callback invoked for each completed word.</param>
     void ProcessChunk(ReadOnlySpan<char> chunk, Action<string> onWord);
+    // ReadOnlySpan<char> slices/all kinds of buffers without copying.
+    // Action<string> decouples tokenizing from “what to do with words” and allows the tokenizer to be used in different contexts.
 
     /// <summary>
     /// Completes tokenization and emits any final pending word via <paramref name="onWord"/>.

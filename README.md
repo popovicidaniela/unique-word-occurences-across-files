@@ -147,17 +147,26 @@ you                                          1
 /
 ├── WordCounter.sln         # Solution file
 ├── WordCounter.csproj      # Project file
-├── Program.cs              # Composition root
-├── CliRunner.cs            # CLI orchestration and argument validation
-├── WordCounterService.cs   # Core counting service
-├── StreamingWordTokenizer.cs # Chunk tokenizer preserving words across boundaries
-├── ConsoleReportFormatter.cs # Console output formatter
-├── WordCounterOptions.cs   # Runtime options/env configuration
-├── WordCountResult.cs      # Result model
-├── IWordCounterService.cs  # Service abstraction
-├── IWordTokenizer.cs       # Tokenizer abstraction
-├── IWordCountReportFormatter.cs # Formatter abstraction
+├── App/
+│   ├── Program.cs          # Composition root
+│   └── CliRunner.cs        # CLI orchestration and argument validation
+├── Processing/
+│   ├── WordCounterService.cs     # Core counting service
+│   ├── StreamingWordTokenizer.cs # Chunk tokenizer preserving words across boundaries
+│   └── WordCounterOptions.cs     # Runtime options/env configuration
+├── Presentation/
+│   └── ConsoleReportFormatter.cs # Console output formatter
+├── Contracts/
+│   ├── IWordCounterService.cs      # Service abstraction
+│   ├── IWordTokenizer.cs           # Tokenizer abstraction
+│   ├── IWordCountReportFormatter.cs # Formatter abstraction
+│   ├── IWordCounterSettings.cs     # Settings abstraction
+│   └── WordCountResult.cs          # Result model
 ├── WordCounter.Tests/      # Test project
+│   ├── WordCounter.Tests.csproj
+│   ├── StreamingWordTokenizerTests.cs
+│   ├── WordCounterServiceTests.cs
+│   └── WordCounterIntegrationTests.cs
 ├── README.md               # This file
 ├── sample1.txt             # Sample test file
 ├── sample2.txt             # Sample test file
@@ -166,7 +175,7 @@ you                                          1
 
 ## Architecture
 
-The application uses .NET Generic Host as the composition root in [Program.cs](Program.cs), with dependency injection for wiring core components.
+The application uses .NET Generic Host as the composition root in [App/Program.cs](App/Program.cs), with dependency injection for wiring core components.
 
 ### DI registrations (Program)
 

@@ -1,15 +1,25 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 class WordCounterProgram
 {
     static async Task Main(string[] args)
     {
-        var options = WordCounterOptions.FromEnvironment();
-        Func<IWordTokenizer> tokenizerFactory = () => new StreamingWordTokenizer();
-        var service = new WordCounterService(options, tokenizerFactory);
-        var formatter = new ConsoleReportFormatter();
-        var runner = new CliRunner(service, formatter);
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+        builder.Services.AddSingleton(WordCounterOptions.FromEnvironment());
+
+        builder.Services.AddTransient<IWordTokenizer, StreamingWordTokenizer>();
+        builder.Services.AddSingleton<Func<IWordTokenizer>>(serviceProvider =>
+            () => serviceProvider.GetRequiredService<IWordTokenizer>());
+
+        builder.Services.AddSingleton<IWordCounterService, WordCounterService>();
+        builder.Services.AddSingleton<IWordCountReportFormatter, ConsoleReportFormatter>();
+        builder.Services.AddSingleton<CliRunner>();
+
+        using IHost host = builder.Build();
+        CliRunner runner = host.Services.GetRequiredService<CliRunner>();
 
         int exitCode = await runner.RunAsync(args);
         System.Environment.ExitCode = exitCode;

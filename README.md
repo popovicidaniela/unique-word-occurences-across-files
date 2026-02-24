@@ -164,6 +164,25 @@ you                                          1
 └── sample3.txt             # Sample test file
 ```
 
+## Architecture
+
+The application uses .NET Generic Host as the composition root in [Program.cs](Program.cs), with dependency injection for wiring core components.
+
+### DI registrations (Program)
+
+- `WordCounterOptions` as singleton (loaded from environment)
+- `IWordTokenizer` -> `StreamingWordTokenizer` as transient (fresh tokenizer instance per factory invocation)
+- `Func<IWordTokenizer>` factory delegate for `WordCounterService`
+- `IWordCounterService` -> `WordCounterService` as singleton
+- `IWordCountReportFormatter` -> `ConsoleReportFormatter` as singleton
+- `CliRunner` as singleton
+
+### Why tokenizer is transient + factory-based
+
+- `StreamingWordTokenizer` is stateful and not thread-safe
+- A new tokenizer instance is required per processed file
+- The `Func<IWordTokenizer>` factory guarantees each file processing path gets its own tokenizer instance
+
 ## Testing
 
 Run the program with the provided sample files:
@@ -198,7 +217,8 @@ Test project dependencies are restored automatically during `dotnet restore` / `
 ### Runtime (WordCounter)
 
 - .NET 10.0 runtime/SDK
-- No external NuGet packages required for the main app
+- `Microsoft.Extensions.Hosting` `10.0.0`
+- `Microsoft.Extensions.DependencyInjection` `10.0.0`
 - Uses only built-in .NET libraries:
   - `System.IO` - File streaming and buffered reading
   - `System.Collections.Concurrent` - Thread-safe ConcurrentDictionary
